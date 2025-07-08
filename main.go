@@ -1,26 +1,35 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"time"
+
 	"github.com/muhammad21236/femProject/internal/app"
 )
 
 func main() {
+	var port int
+	flag.IntVar(&port, "port", 8086, "Port to run the application on")
+	flag.Parse()
+
 	application, err := app.NewApplication()
 	if err != nil {
 		panic(err)
 	}
-	application.Logger.Println("Application running")
+	
 
 	http.HandleFunc("/health", healthCheck)
 	server := &http.Server{
-		Addr:         ":8086",
+		Addr:         fmt.Sprintf(":%d", port),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
+
+	application.Logger.Printf("Starting server on port %d", port)
+
 	err = server.ListenAndServe()
 	if err != nil {
 		application.Logger.Fatalf("Failed to start server: %v", err)
