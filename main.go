@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/muhammad21236/femProject/internal/app"
+	"github.com/muhammad21236/femProject/internal/routes"
 )
 
 func main() {
@@ -18,11 +19,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
-
-	http.HandleFunc("/health", healthCheck)
+	r := routes.SetupRoutes(application)
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      r,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -36,6 +36,4 @@ func main() {
 	}
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "OK")
-}
+
