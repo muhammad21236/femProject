@@ -9,6 +9,7 @@ import (
 
 	"github.com/muhammad21236/femProject/internal/api"
 	"github.com/muhammad21236/femProject/internal/store"
+	"github.com/muhammad21236/femProject/migrations"
 )
 
 type Application struct {
@@ -22,6 +23,11 @@ func NewApplication() (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = store.MigrateFS(pgDB, migrations.FS, ".")
+	if err != nil {
+		panic(err)
+	}
+
 	logger := log.New(os.Stdout, "app: ", log.Ldate|log.Ltime|log.Lshortfile)
 	// Initialize the WorkoutHandler
 	workoutHandler := api.NewWorkoutHandler()
