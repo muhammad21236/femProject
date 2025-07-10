@@ -19,6 +19,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer application.DB.Close() // Ensure the database connection is closed when the application exits
 	r := routes.SetupRoutes(application)
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
