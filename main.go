@@ -36,5 +36,3 @@ func main() {
 		application.Logger.Fatalf("Failed to start server: %v", err)
 	}
 }
-
-
