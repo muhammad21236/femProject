@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS workout_entries (
         (reps IS NULL OR duration_seconds IS NULL)
     )
 )
--- goose StatementEnd
--- goose Down
+-- +goose StatementEnd
+-- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS workout_entries;
 -- +goose StatementEnd
