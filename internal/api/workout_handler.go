@@ -1,18 +1,23 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/muhammad21236/femProject/internal/store"
 )
 
-type WorkoutHandler struct {}
+type WorkoutHandler struct {
+	workoutStore store.WorkoutStore
+}
 
-func NewWorkoutHandler() *WorkoutHandler {
-	return &WorkoutHandler{}
+func NewWorkoutHandler(workoutStore store.WorkoutStore) *WorkoutHandler {
+	return &WorkoutHandler{
+		workoutStore: workoutStore,
+	}
 }
 
 func (wh *WorkoutHandler) HandleGetWorkoutByID(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +37,23 @@ func (wh *WorkoutHandler) HandleGetWorkoutByID(w http.ResponseWriter, r *http.Re
 }
 
 func (wh *WorkoutHandler) HandleCreateWorkout(w http.ResponseWriter, r *http.Request) {
-	// Here you would typically parse the request body to get workout details
-	// For simplicity, we will just return a success message
-	fmt.Fprint(w, "Creating a new workout")
+	var workout store.Workout
+	err := json.NewDecoder(r.Body).Decode(&workout)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "failed to create workout", http.StatusInternalServerError)
+		return
+	}
+
+	createdWorkout, err := wh.workoutStore.CreteWorkout(&workout)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "failed to create workout", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(createdWorkout)
+	fmt.Println("Workout created successfully:", createdWorkout)
+	w.WriteHeader(http.StatusCreated)
 }
