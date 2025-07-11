@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -38,10 +39,9 @@ func (wh *WorkoutHandler) HandleGetWorkoutByID(w http.ResponseWriter, r *http.Re
 
 func (wh *WorkoutHandler) HandleCreateWorkout(w http.ResponseWriter, r *http.Request) {
 	var workout store.Workout
-	err := json.NewDecoder(r.Body).Decode(&workout)
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "failed to create workout", http.StatusInternalServerError)
+	if err := json.NewDecoder(r.Body).Decode(&workout); err != nil {
+		log.Println("failed to create workout:", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
