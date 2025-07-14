@@ -1,6 +1,10 @@
 package store
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"github.com/ydb-platform/ydb-go-sdk/v3/query"
+)
 
 type Workout struct {
 	ID             int            `json:"id"`
@@ -33,6 +37,7 @@ func NewPostgresWorkoutStore(db *sql.DB) *PostgresWorkoutStore {
 type WorkoutStore interface {
 	CreteWorkout(*Workout) (*Workout, error)
 	GetWorkoutByID(id int64) (*Workout, error)
+	UpdateWorkout(*Workout) (*Workout, error)
 }
 
 func (pg *PostgresWorkoutStore) CreteWorkout(workout *Workout) (*Workout, error) {
@@ -70,5 +75,38 @@ func (pg *PostgresWorkoutStore) CreteWorkout(workout *Workout) (*Workout, error)
 
 func (pg *PostgresWorkoutStore) GetWorkoutByID(id int64) (*Workout, error) {
 	Workout := &Workout{}
+	query := `SELECT id, title, description, duration, calories_burned
+			  FROM workouts 
+			  WHERE id = $1`
+	err := pg.db.QueryRow(query, id).Scan(&Workout.ID, &Workout.Title, &Workout.Description, &Workout.Duration, &Workout.CaloriesBurned)
+	if err == sql.ErrNoRows {
+		return nil, nil // No workout found
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	entriesQuery := `SELECT id, exercise_name, sets, reps, duration_seconds, weight, notes, order_index
+					FROM workout_entries 
+					WHERE workout_id = $1
+					ORDER BY order_index`
+	rows, err := pg.db.Query(entriesQuery, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		entry := WorkoutEntry{}
+		err = rows.Scan(&entry.ID, &entry.ExerciseName, &entry.Sets, &entry.Reps, &entry.DurationSeconds, &entry.Weight, &entry.Notes, &entry.OrderIndex)
+		if err != nil {
+			return nil, err
+		}
+		Workout.Entries = append(Workout.Entries, entry)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return Workout, nil
 }
