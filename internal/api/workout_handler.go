@@ -42,7 +42,7 @@ func (wh *WorkoutHandler) HandleGetWorkoutByID(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(workout)
 
-	fmt.Fprint(w, "Fetching workout with ID: ", workoutID)
+	// fmt.Fprint(w, "Fetching workout with ID: ", workoutID)
 
 }
 
@@ -90,11 +90,11 @@ func (wh *WorkoutHandler) HandleUpdateWorkoutByID(w http.ResponseWriter, r *http
 	}
 
 	var updateWorkoutRequest struct {
-		Title          *string              `json:"title"`
-		Description    *string              `json:"description"`
-		Duration       *int                 `json:"duration"`
-		CaloriesBurned *int                 `json:"calories_burned"`
-		Entries        []store.WorkoutEntry `json:"entries"`
+		Title           *string              `json:"title"`
+		Description     *string              `json:"description"`
+		DurationMinutes *int                 `json:"duration_minutes"` // Duration in minutes
+		CaloriesBurned  *int                 `json:"calories_burned"`
+		Entries         []store.WorkoutEntry `json:"entries"`
 	}
 
 	err = json.NewDecoder(r.Body).Decode(&updateWorkoutRequest)
@@ -109,8 +109,8 @@ func (wh *WorkoutHandler) HandleUpdateWorkoutByID(w http.ResponseWriter, r *http
 	if updateWorkoutRequest.Description != nil {
 		existingWorkout.Description = *updateWorkoutRequest.Description
 	}
-	if updateWorkoutRequest.Duration != nil {
-		existingWorkout.Duration = *updateWorkoutRequest.Duration
+	if updateWorkoutRequest.DurationMinutes != nil {
+		existingWorkout.DurationMinutes = *updateWorkoutRequest.DurationMinutes
 	}
 	if updateWorkoutRequest.CaloriesBurned != nil {
 		existingWorkout.CaloriesBurned = *updateWorkoutRequest.CaloriesBurned

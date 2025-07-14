@@ -7,12 +7,12 @@ import (
 )
 
 type Workout struct {
-	ID             int            `json:"id"`
-	Title          string         `json:"title"`
-	Description    string         `json:"description"`
-	Duration       int            `json:"duration"`        // Duration in minutes
-	CaloriesBurned int            `json:"calories_burned"` // Calories burned
-	Entries        []WorkoutEntry `json:"entries"`         // List of workout entries
+	ID              int            `json:"id"`
+	Title           string         `json:"title"`
+	Description     string         `json:"description"`
+	DurationMinutes int            `json:"duration_minutes"` // Duration in minutes
+	CaloriesBurned  int            `json:"calories_burned"`  // Calories burned
+	Entries         []WorkoutEntry `json:"entries"`          // List of workout entries
 }
 
 type WorkoutEntry struct {
@@ -51,7 +51,7 @@ func (pg *PostgresWorkoutStore) CreteWorkout(workout *Workout) (*Workout, error)
 			  VALUES ($1, $2, $3, $4) 
 			  RETURNING id`
 
-	err = tx.QueryRow(query, workout.Title, workout.Description, workout.Duration, workout.CaloriesBurned).Scan(&workout.ID)
+	err = tx.QueryRow(query, workout.Title, workout.Description, workout.DurationMinutes, workout.CaloriesBurned).Scan(&workout.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +75,10 @@ func (pg *PostgresWorkoutStore) CreteWorkout(workout *Workout) (*Workout, error)
 
 func (pg *PostgresWorkoutStore) GetWorkoutByID(id int64) (*Workout, error) {
 	Workout := &Workout{}
-	query := `SELECT id, title, description, duration, calories_burned
+	query := `SELECT id, title, description, duration_minutes, calories_burned
 			  FROM workouts 
 			  WHERE id = $1`
-	err := pg.db.QueryRow(query, id).Scan(&Workout.ID, &Workout.Title, &Workout.Description, &Workout.Duration, &Workout.CaloriesBurned)
+	err := pg.db.QueryRow(query, id).Scan(&Workout.ID, &Workout.Title, &Workout.Description, &Workout.DurationMinutes, &Workout.CaloriesBurned)
 	if err == sql.ErrNoRows {
 		return nil, nil // No workout found
 	}
@@ -119,9 +119,9 @@ func (pg *PostgresWorkoutStore) UpdateWorkout(workout *Workout) (*Workout, error
 	defer tx.Rollback()
 
 	query := `UPDATE workouts 
-			  SET title = $1, description = $2, duration = $3, calories_burned = $4 
+			  SET title = $1, description = $2, duration_minutes = $3, calories_burned = $4 
 			  WHERE id = $5`
-	result, err := tx.Exec(query, workout.Title, workout.Description, workout.Duration, workout.CaloriesBurned, workout.ID)
+	result, err := tx.Exec(query, workout.Title, workout.Description, workout.DurationMinutes, workout.CaloriesBurned, workout.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -138,11 +138,12 @@ func (pg *PostgresWorkoutStore) UpdateWorkout(workout *Workout) (*Workout, error
 	if err != nil {
 		return nil, err
 	}
+
 	for _, entry := range workout.Entries {
-		entryQuery := `UPDATE workout_entries 
-					   SET exercise_name = $1, sets = $2, reps = $3, duration_seconds = $4, weight = $5, notes = $6, order_index = $7
-					   WHERE id = $8 AND workout_id = $9`
-		_, err = tx.Exec(entryQuery, entry.ExerciseName, entry.Sets, entry.Reps, entry.DurationSeconds, entry.Weight, entry.Notes, entry.OrderIndex, entry.ID, workout.ID)
+		entryQuery := `INSERT INTO workout_entries 
+		(workout_id, exercise_name, sets, reps, duration_seconds, weight, notes, order_index)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+		_, err = tx.Exec(entryQuery, workout.ID, entry.ExerciseName, entry.Sets, entry.Reps, entry.DurationSeconds, entry.Weight, entry.Notes, entry.OrderIndex)
 		if err != nil {
 			return nil, err
 		}
