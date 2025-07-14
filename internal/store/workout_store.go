@@ -3,7 +3,7 @@ package store
 import (
 	"database/sql"
 
-	"github.com/ydb-platform/ydb-go-sdk/v3/query"
+	_ "github.com/ydb-platform/ydb-go-sdk/v3/query"
 )
 
 type Workout struct {
@@ -12,7 +12,7 @@ type Workout struct {
 	Description    string         `json:"description"`
 	Duration       int            `json:"duration"`        // Duration in minutes
 	CaloriesBurned int            `json:"calories_burned"` // Calories burned
-	Entries        []WorkoutEntry `json:"entries"`         // Date of the workout in YYYY-MM-DD format
+	Entries        []WorkoutEntry `json:"entries"`         // List of workout entries
 }
 
 type WorkoutEntry struct {
@@ -109,4 +109,48 @@ func (pg *PostgresWorkoutStore) GetWorkoutByID(id int64) (*Workout, error) {
 	}
 
 	return Workout, nil
+}
+
+func (pg *PostgresWorkoutStore) UpdateWorkout(workout *Workout) (*Workout, error) {
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	query := `UPDATE workouts 
+			  SET title = $1, description = $2, duration = $3, calories_burned = $4 
+			  WHERE id = $5`
+	result, err := tx.Exec(query, workout.Title, workout.Description, workout.Duration, workout.CaloriesBurned, workout.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+
+	if rowsAffected == 0 {
+		return nil, sql.ErrNoRows // No workout found to update
+	}
+	_, err = tx.Exec(`DELETE FROM workout_entries WHERE workout_id = $1`, workout.ID)
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range workout.Entries {
+		entryQuery := `UPDATE workout_entries 
+					   SET exercise_name = $1, sets = $2, reps = $3, duration_seconds = $4, weight = $5, notes = $6, order_index = $7
+					   WHERE id = $8 AND workout_id = $9`
+		_, err = tx.Exec(entryQuery, entry.ExerciseName, entry.Sets, entry.Reps, entry.DurationSeconds, entry.Weight, entry.Notes, entry.OrderIndex, entry.ID, workout.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return workout, nil
 }
