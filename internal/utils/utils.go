@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -16,22 +17,21 @@ func WriteJSON(w http.ResponseWriter, status int, data Envelope) error {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return err
 	}
-	js = append(js, '\n') // Add a newline for better readability
+	js = append(js, '\n') // Add newline for readability
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write(js)
 	return nil
-
 }
 
 func ReadIDParam(r *http.Request) (int, error) {
-	idParam := chi.URLParam(r, "id")
+	idParam := chi.URLParam(r, "workoutID")
 	if idParam == "" {
-		return 0, http.ErrNoLocation
+		return 0, errors.New("missing id parameter")
 	}
 	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		return 0, err
+	if err != nil || id <= 0 {
+		return 0, errors.New("invalid id parameter")
 	}
 	return id, nil
 }
