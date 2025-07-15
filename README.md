@@ -76,7 +76,7 @@ goose -dir ./migrations postgres "postgresql://postgres:password@localhost:5432/
 ### 🚀 Start the Server
 
 ```bash
-go run ./cmd/api/main.go
+go run main.go
 ```
 
 ---
