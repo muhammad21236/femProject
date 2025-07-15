@@ -2,8 +2,6 @@ package store
 
 import (
 	"database/sql"
-
-	_ "github.com/ydb-platform/ydb-go-sdk/v3/query"
 )
 
 type Workout struct {
@@ -38,6 +36,7 @@ type WorkoutStore interface {
 	CreteWorkout(*Workout) (*Workout, error)
 	GetWorkoutByID(id int64) (*Workout, error)
 	UpdateWorkout(*Workout) (*Workout, error)
+	DeleteWorkout(id int64) error
 }
 
 func (pg *PostgresWorkoutStore) CreteWorkout(workout *Workout) (*Workout, error) {
@@ -154,4 +153,24 @@ func (pg *PostgresWorkoutStore) UpdateWorkout(workout *Workout) (*Workout, error
 		return nil, err
 	}
 	return workout, nil
+}
+
+func (pg *PostgresWorkoutStore) DeleteWorkout(id int64) error {
+	query := `DELETE FROM workouts
+	 WHERE id = $1`
+
+	result, err := pg.db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows // No workout found to delete
+	}
+
+	return nil
 }
