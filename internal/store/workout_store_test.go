@@ -2,8 +2,11 @@ package store
 
 import (
 	"database/sql"
-	_ "github.com/jackc/pgx/v4/stdlib"
 	"testing"
+
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {
@@ -29,17 +32,17 @@ func TestCreateWorkout(t *testing.T) {
 
 	store := NewPostgresWorkoutStore(db)
 	tests := []struct {
-		name     string
-		workout  *Workout
-		wantErr  bool
+		name    string
+		workout *Workout
+		wantErr bool
 	}{
 		{
 			name: "Create valid workout",
 			workout: &Workout{
-				Title:              "Test Workout",
-				Description: "This is a test workout",
-				DurationMinutes:          60,
-				CaloriesBurned:    200,
+				Title:           "Test Workout",
+				Description:     "This is a test workout",
+				DurationMinutes: 60,
+				CaloriesBurned:  200,
 				Entries: []WorkoutEntry{
 					{
 						ExerciseName: "Push-ups",
@@ -53,13 +56,61 @@ func TestCreateWorkout(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "Create invalid workout",
+			workout: &Workout{
+				Title:           "Invalid Workout",
+				Description:     "This is a test workout Invalid",
+				DurationMinutes: 90,
+				CaloriesBurned:  300,
+				Entries: []WorkoutEntry{
+					{
+						ExerciseName: "Plank",
+						Reps:         IntPtr(60),
+						Sets:         3,
+						Weight:       FloatPtr(135.5),
+						Notes:        "form",
+						OrderIndex:   1,
+					},
+					{
+						ExerciseName:    "Squats",
+						Reps:            IntPtr(12),
+						Sets:            4,
+						Weight:          FloatPtr(185),
+						Notes:           "keep form",
+						DurationSeconds: IntPtr(60),
+						OrderIndex:      2,
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := store.CreteWorkout(tt.workout)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreateWorkout() error = %v, wantErr %v", err, tt.wantErr)
+			createdWorkout, err := store.CreteWorkout(tt.workout)
+			if tt.wantErr {
+				assert.Error(t, err, "Expected error for test case: %s", tt.name)
+				return
+			}
+			require.NoError(t, err, "Unexpected error for test case: %s", tt.name)
+
+			retrieved, err := store.GetWorkoutByID(int64(createdWorkout.ID))
+			require.NoError(t, err, "Failed to retrieve workout by ID for test case: %s", tt.name)
+
+			assert.Equal(t, tt.workout.Title, retrieved.Title)
+			assert.Equal(t, tt.workout.Description, retrieved.Description)
+			assert.Equal(t, tt.workout.DurationMinutes, retrieved.DurationMinutes)
+			assert.Equal(t, len(tt.workout.Entries), len(retrieved.Entries))
+
+			for i := range retrieved.Entries {
+				assert.Equal(t, tt.workout.Entries[i].ExerciseName, retrieved.Entries[i].ExerciseName)
+				assert.Equal(t, tt.workout.Entries[i].Reps, retrieved.Entries[i].Reps)
+				assert.Equal(t, tt.workout.Entries[i].Sets, retrieved.Entries[i].Sets)
+				assert.Equal(t, tt.workout.Entries[i].Weight, retrieved.Entries[i].Weight)
+				assert.Equal(t, tt.workout.Entries[i].Notes, retrieved.Entries[i].Notes)
+				assert.Equal(t, tt.workout.Entries[i].OrderIndex, retrieved.Entries[i].OrderIndex)
 			}
 		})
 	}
