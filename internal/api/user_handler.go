@@ -1,11 +1,14 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
+	"net/http"
 	"regexp"
 
 	"github.com/muhammad21236/femProject/internal/store"
+	"github.com/muhammad21236/femProject/internal/utils"
 )
 
 type registerUserRequest struct {
@@ -45,4 +48,29 @@ func (h *UserHandler) validateRegisterRequest(req *registerUserRequest) error {
 		return errors.New("PASSWORD IS REQUIRED FIELD")
 	}
 	return nil
+}
+
+func (h *UserHandler) HandleRegisterUser(w http.ResponseWriter, r *http.Request) {
+	var req registerUserRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		h.logger.Panicf("ERROR: Decoding Register Request: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "Invalid Request Payload"})
+		return
+	}
+
+	err = h.validateRegisterRequest(&req)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": err.Error()})
+		return
+	}
+
+	user := &store.User{
+		Username: req.Username,
+		Email:    req.Email,
+	}
+
+	if req.Bio != "" {
+		user.Bio = req.Bio
+	}
 }
