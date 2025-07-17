@@ -39,6 +39,7 @@ A practical workout tracker REST API built with Go, PostgreSQL, and the `chi` ro
 │   └── 00001_users.sql
 │   └── 00002_workouts.sql
 │   └── 00003_workout_entries.sql
+│   └── 00004_tokens.sql
 │   └── fs.go
 ├──.gitignore
 ├── docker-compose.yml
