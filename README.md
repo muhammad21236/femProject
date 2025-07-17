@@ -98,10 +98,10 @@ go run main.go
 
 ### Users
 
-| Method   | Endpoint      | Description                   |
-| :------- | :------------ | :---------------------------- |
-| `POST` | `/register` | Register new user             |
-| `POST` | `/login`    | Authenticate user, return JWT |
+| Method   | Endpoint   | Description                   |
+| :------- | :--------- | :---------------------------- |
+| `POST` | `/users` | Register new user             |
+| `POST` | `/login` | Authenticate user, return JWT |
 
 ---
 

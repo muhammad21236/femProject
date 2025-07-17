@@ -54,7 +54,7 @@ func (h *UserHandler) HandleRegisterUser(w http.ResponseWriter, r *http.Request)
 	var req registerUserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		h.logger.Panicf("ERROR: Decoding Register Request: %v", err)
+		h.logger.Printf("ERROR: Decoding Register Request: %v", err)
 		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "Invalid Request Payload"})
 		return
 	}
@@ -73,4 +73,20 @@ func (h *UserHandler) HandleRegisterUser(w http.ResponseWriter, r *http.Request)
 	if req.Bio != "" {
 		user.Bio = req.Bio
 	}
+
+	err = user.PasswordHash.Set(req.Password)
+	if err != nil {
+		h.logger.Printf("ERROR: hashing password %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"ERROR": "Internal Server Error"})
+		return
+	}
+
+	err = h.userStore.CreateUser(user)
+	if err != nil {
+		h.logger.Printf("ERROR: registering user %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"ERROR": "Internal Server Error"})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, utils.Envelope{"User": user})
 }
