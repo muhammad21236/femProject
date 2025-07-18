@@ -30,9 +30,12 @@ A practical workout tracker REST API built with Go, PostgreSQL, and the `chi` ro
 │   │   └── routes.go
 │   ├── store/
 │   │   └── database.go
+│   │   └── tokens.go
 │   │   └── user_store.go
 │   │   └── workout_store_test.go
 │   │   └── workout_store.go
+│   ├── tokens/
+│   │   └── tokens.go
 │   ├── utils/
 │   │   └── utils.go
 ├── migrations/
