@@ -23,6 +23,8 @@ A practical workout tracker REST API built with Go, PostgreSQL, and the `chi` ro
 .
 ├── internal/
 │   ├── api/
+│   │   ├── token_handler.go
+│   │   ├── user_handler.go
 │   │   ├── workout_handler.go
 │   ├── app/
 │   │   └── app.go
@@ -76,7 +78,7 @@ docker-compose up --build
 ### 🐦 Run Migrations
 
 ```bash
-goose -dir ./migrations postgres "postgresql://postgres:password@localhost:5432/workoutdb?sslmode=disable" up
+goose -dir ./migrations postgres "postgresql://postgres:password@localhost:5433/workoutdb?sslmode=disable" up
 ```
 
 ---
@@ -102,10 +104,10 @@ go run main.go
 
 ### Users
 
-| Method   | Endpoint   | Description                   |
-| :------- | :--------- | :---------------------------- |
-| `POST` | `/users` | Register new user             |
-| `POST` | `/login` | Authenticate user, return JWT |
+| Method   | Endpoint                   | Description                   |
+| :------- | :------------------------- | :---------------------------- |
+| `POST` | `/users`                 | Register new user             |
+| `POST` | `/tokens/authentication` | Authenticate user, return JWT |
 
 ---
 
