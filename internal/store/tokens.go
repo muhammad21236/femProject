@@ -37,11 +37,10 @@ func (t *PostgresTokenStore) Insert(token *tokens.Token) error {
 	INSERT INTO tokens (user_id, hash, expiry, scope)
 	VALUES ($1, $2, $3, $4)
 	`
-
-	_, err := t.db.Exec(query, token.Hash, token.UserID, token.Expiry, token.Scope)
-
+	_, err := t.db.Exec(query, token.UserID, token.Hash, token.Expiry, token.Scope)
 	return err
 }
+
 
 func (t *PostgresTokenStore) DeleteAllTokensForUser(userID int, scope string) error {
 	query := `
