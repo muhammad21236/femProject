@@ -28,6 +28,8 @@ A practical workout tracker REST API built with Go, PostgreSQL, and the `chi` ro
 │   │   ├── workout_handler.go
 │   ├── app/
 │   │   └── app.go
+│   ├── middleware/
+│   │   └── middleware.go
 │   ├── routes/
 │   │   └── routes.go
 │   ├── store/
