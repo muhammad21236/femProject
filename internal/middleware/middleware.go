@@ -50,15 +50,27 @@ func (um *UserMiddleware) Authenticate(next http.Handler) http.Handler {
 		token := headerParts[1]
 		user, err := um.UserStore.GetUserToken(tokens.ScopeAuth, token)
 		if err != nil {
-			utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error":"Invalid Token"})
+			utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error": "Invalid Token"})
 			return
 		}
 		if user == nil {
-			utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error":"Token Expired or Invalid"})
+			utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error": "Token Expired or Invalid"})
 			return
 		}
 
 		r = SetUser(r, user)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (um *UserMiddleware) RequireUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := GetUser(r)
+
+		if user.IsAnonymous() {
+			utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error": "you must be logged in to access this route"})
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }
